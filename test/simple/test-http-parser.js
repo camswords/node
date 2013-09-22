@@ -141,6 +141,7 @@ function expectBody(expected) {
     assert.equal(info.versionMajor, 1);
     assert.equal(info.versionMinor, 1);
     assert.equal(info.statusCode, 200);
+    assert.equal(info.reasonPhrase, "OK");
   });
 
   parser[kOnBody] = mustCall(function(buf, start, len) {
@@ -167,6 +168,7 @@ function expectBody(expected) {
     assert.equal(info.versionMajor, 1);
     assert.equal(info.versionMinor, 0);
     assert.equal(info.statusCode, 200);
+    assert.equal(info.reasonPhrase, "Connection established");
     assert.deepEqual(info.headers || parser.headers, []);
   });
 

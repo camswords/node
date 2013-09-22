@@ -203,12 +203,19 @@ class Parser : public ObjectWrap {
   HTTP_CB(on_message_begin) {
     num_fields_ = num_values_ = 0;
     url_.Reset();
+    reason_phrase_.Reset();
     return 0;
   }
 
 
   HTTP_DATA_CB(on_url) {
     url_.Update(at, length);
+    return 0;
+  }
+
+
+  HTTP_DATA_CB(on_status) {
+    reason_phrase_.Update(at, length);
     return 0;
   }
 
@@ -281,6 +288,7 @@ class Parser : public ObjectWrap {
     if (parser_.type == HTTP_RESPONSE) {
       message_info->Set(env()->status_code_string(),
                         Integer::New(parser_.status_code, node_isolate));
+      message_info->Set(env()->reason_phrase_string(), reason_phrase_.ToString());
     }
 
     // VERSION
@@ -374,6 +382,7 @@ class Parser : public ObjectWrap {
 
   void Save() {
     url_.Save();
+    reason_phrase_.Save();
 
     for (int i = 0; i < num_fields_; i++) {
       fields_[i].Save();
@@ -527,6 +536,7 @@ class Parser : public ObjectWrap {
   void Init(enum http_parser_type type) {
     http_parser_init(&parser_, type);
     url_.Reset();
+    reason_phrase_.Reset();
     num_fields_ = 0;
     num_values_ = 0;
     have_flushed_ = false;
@@ -544,6 +554,7 @@ class Parser : public ObjectWrap {
   StringPtr fields_[32];  // header fields
   StringPtr values_[32];  // header values
   StringPtr url_;
+  StringPtr reason_phrase_;
   int num_fields_;
   int num_values_;
   bool have_flushed_;
@@ -558,6 +569,7 @@ class Parser : public ObjectWrap {
 const struct http_parser_settings Parser::settings = {
   Parser::on_message_begin,
   Parser::on_url,
+  Parser::on_status,
   Parser::on_header_field,
   Parser::on_header_value,
   Parser::on_headers_complete,
